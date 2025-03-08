@@ -14,7 +14,7 @@
 ## Установка
 1. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/your-repo/cafe-management.git
+   git clone https://github.com/cafe_management/cafe-management.git
 2. Создайте виртуальное окружение:
    ```
    python3 -m venv venv
