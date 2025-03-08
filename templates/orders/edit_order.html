@@ -1,0 +1,152 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать заказ</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Редактировать заказ #{{ order.id }}</h1>
+    <form method="post" id="editOrderForm">
+        {% csrf_token %}
+        <label for="table_number">Номер стола:</label>
+        <input type="number" id="table_number" name="table_number" value="{{ order.table_number }}" required><br><br>
+
+        <!-- Выбор статуса -->
+        <label for="status">Статус:</label>
+        <select id="status" name="status">
+            <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>В ожидании</option>
+            <option value="ready" {% if order.status == 'ready' %}selected{% endif %}>Готово</option>
+            <option value="paid" {% if order.status == 'paid' %}selected{% endif %}>Оплачено</option>
+        </select><br><br>
+
+        <!-- Поля для добавления блюда -->
+        <div id="add-dish-section" {% if order.status == 'paid' %}class="disabled"{% endif %}>
+            <label for="dish_name">Название блюда:</label>
+            <input type="text" id="dish_name" placeholder="Введите название блюда"><br><br>
+
+            <label for="dish_price">Цена блюда:</label>
+            <input type="number" id="dish_price" step="0.01" placeholder="Введите цену"><br><br>
+
+            <button type="button" onclick="addDish()">Добавить блюдо</button><br><br>
+        </div>
+
+        <!-- Таблица текущих блюд -->
+        <h3>Список блюд:</h3>
+        <table id="dishTable">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Цена</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items %}
+                <tr data-name="{{ item.name }}" data-price="{{ item.price }}">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.price }}</td>
+                    <td>
+                        <button 
+                            type="button" 
+                            onclick="removeDish(this)" 
+                            {% if order.status == 'paid' %}disabled{% endif %}
+                        >
+                            Удалить
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="total">Итоговая сумма: <span id="totalPrice">{{ order.total_price }}</span> руб.</p>
+
+        <!-- Скрытый input для отправки JSON -->
+        <input type="hidden" id="items_json" name="items">
+
+        <button type="submit">Сохранить изменения</button>
+    </form>
+    <br>
+    <a href="{% url 'order_list' %}" class="button">Вернуться к списку заказов</a>
+
+    <script>
+        let items = {{ order.items|safe }};
+
+        function addDish() {
+            const dishName = document.getElementById('dish_name').value.trim();
+            const dishPrice = parseFloat(document.getElementById('dish_price').value);
+
+            if (dishName && !isNaN(dishPrice)) {
+                // Добавляем блюдо в массив
+                items.push({ name: dishName, price: dishPrice });
+
+                // Очищаем поля ввода
+                document.getElementById('dish_name').value = '';
+                document.getElementById('dish_price').value = '';
+
+                // Обновляем таблицу
+                updateDishTable();
+
+                // Обновляем итоговую сумму
+                updateTotalPrice();
+            } else {
+                alert('Пожалуйста, введите корректное название и цену блюда.');
+            }
+        }
+
+        function removeDish(button) {
+            const row = button.closest('tr');
+            const name = row.dataset.name;
+            const price = parseFloat(row.dataset.price);
+
+            // Удаляем блюдо из массива
+            items = items.filter(item => item.name !== name || item.price !== price);
+
+            // Обновляем таблицу
+            updateDishTable();
+
+            // Обновляем итоговую сумму
+            updateTotalPrice();
+        }
+
+        function updateDishTable() {
+            const tableBody = document.querySelector('#dishTable tbody');
+            tableBody.innerHTML = ''; // Очищаем таблицу
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.dataset.name = item.name;
+                row.dataset.price = item.price;
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.price.toFixed(2)}</td>
+                    <td>
+                        <button 
+                            type="button" 
+                            onclick="removeDish(this)" 
+                            {% if order.status == 'paid' %}disabled{% endif %}
+                        >
+                            Удалить
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateTotalPrice() {
+            const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('totalPrice').textContent = totalPrice.toFixed(2);
+
+            // Обновляем скрытое поле для отправки JSON
+            document.getElementById('items_json').value = JSON.stringify(items);
+        }
+
+        // Инициализация при загрузке страницы
+        updateDishTable();
+        updateTotalPrice();
+    </script>
+</body>
+</html>

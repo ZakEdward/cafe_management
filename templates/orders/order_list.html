@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список заказов</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+</head>
+<body>
+    <!-- Заголовок с ссылкой -->
+    <h1><a href="{% url 'order_list' %}">Список заказов</a></h1>
+
+    <form method="get">
+        <input type="text" name="q" placeholder="Поиск по номеру стола или статусу">
+        <button type="submit">Поиск</button>
+    </form>
+
+    <table border="1">
+        <tr>
+            <th>Номер стола</th>
+            <th>Блюда</th>
+            <th>Общая стоимость</th>
+            <th>Статус</th>
+            <th>Действия</th>
+        </tr>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.table_number }}</td>
+            <td>
+                <ul>
+                    {% for item in order.items %}
+                    <li>{{ item.name }} - {{ item.price }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+            <td>{{ order.total_price }}</td>
+            <td>{{ order.get_status_display }}</td>
+            <td>
+                <a href="{% url 'update_order' order.id %}">Изменить статус</a>
+                <a href="{% url 'delete_order' order.id %}">Удалить</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+        <a href="{% url 'add_order' %}" class="button">Добавить заказ</a>
+        <a href="{% url 'revenue_report' %}" class="button">Выручка за смену</a>
+</body>
+</html>

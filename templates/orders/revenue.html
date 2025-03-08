@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выручка за смену</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+</head>
+<body>
+    <h1>Выручка за смену</h1>
+    <p>Общая выручка: {{ total_revenue }} руб.</p>
+    <br>
+    <a href="{% url 'order_list' %}" class="button">Вернуться к списку заказов</a>
+</body>
+</html>
